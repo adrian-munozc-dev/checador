@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checador - Administración</title>
+<style>
+:root {
+  --fondo: #f5f6f8; --tarjeta: #ffffff; --texto: #1c2430; --suave: #5d6878;
+  --linea: #dde1e8; --acento: #1f5fa8; --acento-texto: #ffffff;
+  --bien: #1d7a46; --aviso: #a86400; --mal: #b3261e; --barra: #8db4e2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fondo: #14181f; --tarjeta: #1d232c; --texto: #e6e9ee; --suave: #9aa5b5;
+    --linea: #2f3743; --acento: #5b9bde; --acento-texto: #0d1218;
+    --bien: #5cc08a; --aviso: #e0a64a; --mal: #f08a82; --barra: #3d6a9e;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fondo); color: var(--texto);
+  font: 15px/1.45 system-ui, "Segoe UI", Roboto, Arial, sans-serif; font-style: normal; }
+em, i { font-style: normal; }
+header { background: var(--tarjeta); border-bottom: 1px solid var(--linea);
+  padding: 12px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+header h1 { font-size: 17px; margin: 0; flex: 1; }
+header .quien { color: var(--suave); font-size: 13px; }
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+.tarjeta { background: var(--tarjeta); border: 1px solid var(--linea);
+  border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+.tarjeta h2 { font-size: 16px; margin: 0 0 12px; }
+nav.pestanas { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+nav.pestanas button { background: var(--tarjeta); color: var(--texto);
+  border: 1px solid var(--linea); border-radius: 8px; padding: 8px 14px; cursor: pointer; font: inherit; }
+nav.pestanas button.activa { background: var(--acento); color: var(--acento-texto); border-color: var(--acento); }
+.filtros { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; margin-bottom: 12px; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--suave); }
+input, select, textarea { font: inherit; color: var(--texto); background: var(--fondo);
+  border: 1px solid var(--linea); border-radius: 8px; padding: 8px 10px; min-width: 140px; }
+textarea { width: 100%; min-height: 70px; }
+button.btn { background: var(--acento); color: var(--acento-texto); border: 0;
+  border-radius: 8px; padding: 9px 16px; font: inherit; cursor: pointer; }
+button.btn.sec { background: transparent; color: var(--acento); border: 1px solid var(--acento); }
+button.btn.mal { background: var(--mal); color: #fff; }
+button.btn:disabled { opacity: .5; cursor: default; }
+button.mini { background: transparent; color: var(--acento); border: 1px solid var(--linea);
+  border-radius: 6px; padding: 3px 9px; cursor: pointer; font: inherit; font-size: 13px; }
+.tabla-caja { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--linea); white-space: nowrap; }
+th { color: var(--suave); font-weight: 600; font-size: 13px; }
+td.num, th.num { text-align: right; }
+tr.anulada td { color: var(--suave); text-decoration: line-through; }
+tr.anulada td.acciones { text-decoration: none; }
+.chip { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px;
+  border: 1px solid var(--linea); }
+.chip.bien { color: var(--bien); border-color: var(--bien); }
+.chip.aviso { color: var(--aviso); border-color: var(--aviso); }
+.chip.mal { color: var(--mal); border-color: var(--mal); }
+.barra { height: 10px; background: var(--barra); border-radius: 3px; min-width: 2px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi { background: var(--tarjeta); border: 1px solid var(--linea); border-radius: 10px; padding: 12px 14px; }
+.kpi b { display: block; font-size: 26px; }
+.kpi span { color: var(--suave); font-size: 13px; }
+.msg { padding: 10px 12px; border-radius: 8px; margin: 0 0 12px; border: 1px solid var(--linea); }
+.msg.mal { color: var(--mal); border-color: var(--mal); }
+.msg.bien { color: var(--bien); border-color: var(--bien); }
+.suave { color: var(--suave); }
+#login { max-width: 360px; margin: 10vh auto; }
+#login label { margin-bottom: 12px; }
+#login input { width: 100%; }
+dialog { background: var(--tarjeta); color: var(--texto); border: 1px solid var(--linea);
+  border-radius: 12px; padding: 18px; width: min(460px, 94vw); }
+dialog::backdrop { background: rgba(0,0,0,.45); }
+dialog h3 { margin: 0 0 12px; font-size: 16px; }
+dialog .fila { display: grid; gap: 10px; margin-bottom: 12px; }
+dialog input, dialog select { width: 100%; }
+.botones { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+.oculto { display: none !important; }
+@media (max-width: 600px) { main { padding: 12px; } }
+</style>
+</head>
+<body>
+
+<div id="pantalla-login" class="oculto">
+  <div id="login" class="tarjeta">
+    <h2>Checador de bibliotecas</h2>
+    <p class="suave">Inicia sesión con tu cuenta de administración.</p>
+    <div id="login-msg"></div>
+    <form id="form-login">
+      <label>Correo <input id="l-correo" type="email" autocomplete="username" required></label>
+      <label>Contraseña <input id="l-clave" type="password" autocomplete="current-password" required></label>
+      <button class="btn" type="submit" id="l-entrar">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<div id="pantalla-app" class="oculto">
+  <header>
+    <h1>Checador - Administración</h1>
+    <span class="quien" id="quien"></span>
+    <button class="btn sec" id="salir">Cerrar sesión</button>
+  </header>
+  <main>
+    <nav class="pestanas" id="pestanas">
+      <button data-p="resumen" class="activa">Resumen</button>
+      <button data-p="entradas">Entradas</button>
+      <button data-p="padron">Padrón</button>
+      <button data-p="sedes">Bibliotecas</button>
+      <button data-p="bitacora">Bitácora</button>
+    </nav>
+    <div id="aviso"></div>
+
+    <section id="p-resumen">
+      <div class="tarjeta">
+        <div class="filtros">
+          <label>Desde <input type="date" id="r-desde"></label>
+          <label>Hasta <input type="date" id="r-hasta"></label>
+          <label>Biblioteca <select id="r-sede"></select></label>
+          <button class="btn" id="r-ver">Ver resumen</button>
+        </div>
+        <div id="r-estado" class="suave"></div>
+      </div>
+      <div id="r-contenido"></div>
+    </section>
+
+    <section id="p-entradas" class="oculto">
+      <div class="tarjeta">
+        <div class="filtros">
+          <label>Desde <input type="date" id="e-desde"></label>
+          <label>Hasta <input type="date" id="e-hasta"></label>
+          <label>Biblioteca <select id="e-sede"></select></label>
+          <label>Matrícula <input type="text" id="e-mat" placeholder="26-12345"></label>
+          <label>Incluir anuladas
+            <select id="e-anul"><option value="no">No</option><option value="si">Sí</option></select></label>
+          <button class="btn" id="e-ver">Buscar</button>
+          <button class="btn sec escritura" id="e-nueva">Agregar entrada manual</button>
+        </div>
+        <div id="e-estado" class="suave"></div>
+        <div class="tabla-caja"><table id="e-tabla"></table></div>
+      </div>
+    </section>
+
+    <section id="p-padron" class="oculto">
+      <div class="tarjeta">
+        <div class="filtros">
+          <label>Buscar (matrícula, nombre o apellido) <input type="text" id="p-buscar" style="min-width:260px"></label>
+          <button class="btn" id="p-ver">Buscar</button>
+          <button class="btn sec escritura-padron" id="p-nuevo">Dar de alta uno</button>
+          <button class="btn sec escritura-padron" id="p-cargar">Cargar archivo (Excel o CSV)</button>
+          <input type="file" id="p-archivo" accept=".xlsx,.csv" class="oculto">
+        </div>
+        <div id="p-estado" class="suave"></div>
+        <div class="tabla-caja"><table id="p-tabla"></table></div>
+      </div>
+    </section>
+
+    <section id="p-sedes" class="oculto">
+      <div class="tarjeta">
+        <h2>Última comunicación de cada biblioteca</h2>
+        <div class="tabla-caja"><table id="s-tabla"></table></div>
+        <p class="suave">Una biblioteca que lleva más de un día sin comunicarse puede tener internet caído o el checador apagado.
+          Lo que se checa mientras tanto no se pierde: se guarda en esa PC y sube después.</p>
+      </div>
+    </section>
+
+    <section id="p-bitacora" class="oculto">
+      <div class="tarjeta">
+        <div class="filtros">
+          <label>Biblioteca <select id="b-sede"></select></label>
+          <button class="btn" id="b-ver">Actualizar</button>
+        </div>
+        <div class="tabla-caja"><table id="b-tabla"></table></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="dlg-anular">
+  <h3>Anular entrada</h3>
+  <p id="dlg-anular-info" class="suave"></p>
+  <div class="fila"><label>Motivo (obligatorio)<textarea id="an-motivo"></textarea></label></div>
+  <div id="an-msg"></div>
+  <div class="botones">
+    <button class="btn sec" id="an-cancelar">Cancelar</button>
+    <button class="btn mal" id="an-ok">Anular</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-alumno">
+  <h3 id="al-titulo">Alumno</h3>
+  <div class="fila">
+    <label>Matrícula <input id="al-mat" placeholder="26-12345"></label>
+    <label>Nombre(s) <input id="al-nombres"></label>
+    <label>Apellidos <input id="al-apellidos"></label>
+    <label>Sexo <select id="al-sexo"><option value="">Elige…</option><option value="H">Hombre</option><option value="M">Mujer</option></select></label>
+    <label>Programa educativo <input id="al-programa" list="lista-programas"></label>
+    <label>Campus <input id="al-campus"></label>
+    <label>Nivel <input id="al-nivel" placeholder="Licenciatura"></label>
+    <label>Tipo de ingreso <input id="al-ingreso"></label>
+  </div>
+  <datalist id="lista-programas"></datalist>
+  <div id="al-msg"></div>
+  <div class="botones">
+    <button class="btn sec" id="al-cancelar">Cancelar</button>
+    <button class="btn" id="al-ok">Guardar</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-carga">
+  <h3>Cargar padrón</h3>
+  <div id="ca-resumen"></div>
+  <div id="ca-msg"></div>
+  <div class="botones">
+    <button class="btn sec" id="ca-cancelar">Cancelar</button>
+    <button class="btn" id="ca-ok">Cargar</button>
+  </div>
+</dialog>
+
+<dialog id="dlg-nueva">
+  <h3>Agregar entrada manual</h3>
+  <p class="suave">Para registrar una entrada que el checador no alcanzó a guardar. Queda marcada como agregada desde la web y con tu motivo.</p>
+  <div class="fila">
+    <label>Biblioteca <select id="n-sede"></select></label>
+    <label>Matrícula o folio <input id="n-mat" placeholder="26-12345 o E26-PLY-00001"></label>
+    <label>Fecha <input type="date" id="n-fecha"></label>
+    <label>Hora <input type="time" id="n-hora"></label>
+    <label>Motivo (obligatorio)<textarea id="n-motivo"></textarea></label>
+  </div>
+  <div id="n-msg"></div>
+  <div class="botones">
+    <button class="btn sec" id="n-cancelar">Cancelar</button>
+    <button class="btn" id="n-ok">Agregar</button>
+  </div>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+"use strict";
+const URL_NUBE = "https://fbnuyrtcsvgqqdneipfo.supabase.co";
+const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZibnV5cnRjc3ZncXFkbmVpcGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMTQyNzEsImV4cCI6MjEwODU5MDI3MX0.QhCsSppmu1G9K0ffpo_uVH-tvdAO-MJqwwvN3p5XG_M";
+const SEDES = {CHB:"Chetumal Bahía", CHS:"Chetumal Salud", FCP:"Felipe Carrillo Puerto",
+               COZ:"Cozumel", PLY:"Playa del Carmen", CUN:"Cancún"};
+const PAGINA = 1000, MAX_FILAS_RESUMEN = 100000, MAX_FILAS_TABLA = 500;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g,
+  c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2, "0");
+const hoyISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const ahoraLocal = () => { const d = new Date();
+  return `${hoyISO()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; };
+
+let sesion = null;   // {access, refresh, expira, uid, correo}
+let perfil = null;   // {rol, sede_id, nombre}
+
+// ------------------------------------------------------------------ sesión
+function guardarSesion() {
+  try { sessionStorage.setItem("checador_sesion", JSON.stringify(sesion)); } catch (e) {}
+}
+function cargarSesion() {
+  try { return JSON.parse(sessionStorage.getItem("checador_sesion")); } catch (e) { return null; }
+}
+function limpiarSesion() {
+  sesion = null; perfil = null;
+  try { sessionStorage.removeItem("checador_sesion"); } catch (e) {}
+}
+function aSesion(r) {
+  return {access: r.access_token, refresh: r.refresh_token,
+          expira: Date.now() + (r.expires_in - 60) * 1000,
+          uid: r.user.id, correo: r.user.email};
+}
+async function tokenAuth(cuerpo, tipo) {
+  const r = await fetch(`${URL_NUBE}/auth/v1/token?grant_type=${tipo}`, {
+    method: "POST", headers: {apikey: API_KEY, "Content-Type": "application/json"},
+    body: JSON.stringify(cuerpo)});
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error_description || d.msg || d.message || "No se pudo iniciar sesión.");
+  return aSesion(d);
+}
+async function tokenVigente() {
+  if (!sesion) throw new Error("Sesión cerrada.");
+  if (Date.now() >= sesion.expira) {
+    sesion = await tokenAuth({refresh_token: sesion.refresh}, "refresh_token");
+    guardarSesion();
+  }
+  return sesion.access;
+}
+
+// ------------------------------------------------------------------ API
+async function api(metodo, ruta, {cuerpo, extra, todo} = {}) {
+  const cab = {apikey: API_KEY, Authorization: "Bearer " + await tokenVigente(),
+               "Content-Type": "application/json", ...(extra || {})};
+  const r = await fetch(`${URL_NUBE}/rest/v1/${ruta}`, {
+    method: metodo, headers: cab, body: cuerpo ? JSON.stringify(cuerpo) : undefined});
+  if (!r.ok) {
+    let t = ""; try { const d = await r.json(); t = d.message || d.hint || ""; } catch (e) {}
+    if (r.status === 401) { limpiarSesion(); mostrar("login"); }
+    throw new Error(t || `Error ${r.status} al hablar con la nube.`);
+  }
+  const txt = await r.text();
+  return txt ? JSON.parse(txt) : null;
+}
+// Lee todas las páginas de una consulta (PostgREST limita 1000 por respuesta)
+async function leerTodo(ruta, maximo) {
+  const filas = [];
+  for (let desde = 0; desde < maximo; desde += PAGINA) {
+    const lote = await api("GET", ruta, {extra: {Range: `${desde}-${desde + PAGINA - 1}`}});
+    filas.push(...lote);
+    if (lote.length < PAGINA) return {filas, truncado: false};
+  }
+  return {filas, truncado: true};
+}
+
+// ------------------------------------------------------------------ vistas
+function mostrar(cual) {
+  $("pantalla-login").classList.toggle("oculto", cual !== "login");
+  $("pantalla-app").classList.toggle("oculto", cual !== "app");
+}
+function msg(donde, texto, tipo) {
+  $(donde).innerHTML = texto ? `<p class="msg ${tipo || ""}">${esc(texto)}</p>` : "";
+}
+function opcionesSede(sel, conTodas) {
+  let h = conTodas ? '<option value="">Todas</option>' : "";
+  const ver = perfil.rol === "encargado" ? [perfil.sede_id] : Object.keys(SEDES);
+  for (const k of ver) h += `<option value="${k}">${esc(SEDES[k])}</option>`;
+  $(sel).innerHTML = h;
+}
+const puedeEscribir = () => perfil && perfil.rol === "admin";
+const puedeEditarPadron = () => perfil && (perfil.rol === "admin" || perfil.rol === "escolares");
+
+async function entrar() {
+  const p = await api("GET", `perfiles?user_id=eq.${sesion.uid}&select=rol,sede_id,nombre`);
+  if (!p.length) throw new Error("Esta cuenta no tiene permisos asignados.");
+  perfil = p[0];
+  if (perfil.rol === "sede") {
+    limpiarSesion();
+    throw new Error("Esta cuenta es de un checador de biblioteca. Usa la cuenta de administración.");
+  }
+  const rolTxt = {admin: "Administrador", escolares: "Servicios Escolares (consulta y padrón)",
+                  encargado: "Encargado de " + (SEDES[perfil.sede_id] || "")}[perfil.rol];
+  $("quien").textContent = `${sesion.correo} · ${rolTxt}`;
+  for (const id of ["r-sede", "e-sede", "b-sede"]) opcionesSede(id, perfil.rol !== "encargado");
+  opcionesSede("n-sede", false);
+  document.querySelectorAll(".escritura").forEach(b => b.classList.toggle("oculto", !puedeEscribir()));
+  document.querySelectorAll(".escritura-padron").forEach(b => b.classList.toggle("oculto", !puedeEditarPadron()));
+  const d = new Date(); d.setDate(d.getDate() - 6);
+  const desde = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  for (const id of ["r-desde", "e-desde"]) $(id).value = desde;
+  for (const id of ["r-hasta", "e-hasta"]) $(id).value = hoyISO();
+  mostrar("app");
+  cambiarPestana("resumen");
+  verResumen();
+  avisoSedes();
+}
+
+function cambiarPestana(p) {
+  document.querySelectorAll("#pestanas button").forEach(b => b.classList.toggle("activa", b.dataset.p === p));
+  for (const s of ["resumen", "entradas", "padron", "sedes", "bitacora"])
+    $("p-" + s).classList.toggle("oculto", s !== p);
+  if (p === "padron" && !$("p-tabla").innerHTML) verPadron();
+  if (p === "sedes") verSedes();
+  if (p === "bitacora") verBitacora();
+  if (p === "entradas" && !$("e-tabla").innerHTML) verEntradas();
+}
+
+// ------------------------------------------------------------------ resumen
+function filtroEntradas(prefijo, soloActivas) {
+  const q = [`fecha=gte.${$(prefijo + "-desde").value}`, `fecha=lte.${$(prefijo + "-hasta").value}`];
+  const s = $(prefijo + "-sede").value;
+  if (s) q.push("sede_id=eq." + s);
+  if (soloActivas) q.push("anulada=eq.0");
+  return q;
+}
+function sumarPor(filas, clave) {
+  const m = new Map();
+  for (const f of filas) { const k = clave(f) || "Sin dato"; m.set(k, (m.get(k) || 0) + f.personas); }
+  return [...m.entries()].sort((a, b) => b[1] - a[1]);
+}
+function tablaBarras(titulo, pares, etiqueta) {
+  if (!pares.length) return "";
+  const max = Math.max(...pares.map(p => p[1]));
+  const filas = pares.map(([k, v]) => `<tr><td>${esc(etiqueta ? etiqueta(k) : k)}</td>
+    <td class="num">${v}</td><td style="width:40%"><div class="barra" style="width:${Math.max(1, v/max*100)}%"></div></td></tr>`).join("");
+  return `<div class="tarjeta"><h2>${esc(titulo)}</h2><div class="tabla-caja"><table>
+    <tr><th>${esc(titulo.split(" por ")[1] || "")}</th><th class="num">Personas</th><th></th></tr>${filas}</table></div></div>`;
+}
+async function verResumen() {
+  msg("r-estado", "Cargando…");
+  $("r-contenido").innerHTML = "";
+  try {
+    const q = filtroEntradas("r", true).concat(["select=fecha,sede_id,personas,carrera,sexo,tipo"]);
+    const {filas, truncado} = await leerTodo("entradas?" + q.join("&"), MAX_FILAS_RESUMEN);
+    const total = filas.reduce((a, f) => a + f.personas, 0);
+    const dias = new Set(filas.map(f => f.fecha)).size;
+    $("r-estado").textContent = truncado ? "Hay demasiados registros: se muestran los primeros " + filas.length + ". Acota las fechas." : "";
+    const porDia = sumarPor(filas, f => f.fecha).sort((a, b) => a[0] < b[0] ? -1 : 1);
+    let html = `<div class="kpis">
+      <div class="kpi"><b>${total}</b><span>personas ingresaron</span></div>
+      <div class="kpi"><b>${filas.length}</b><span>registros de entrada</span></div>
+      <div class="kpi"><b>${dias ? Math.round(total / dias) : 0}</b><span>personas por día (promedio)</span></div></div>`;
+    html += tablaBarras("Personas por biblioteca", sumarPor(filas, f => f.sede_id), k => SEDES[k] || k);
+    html += tablaBarras("Personas por día", porDia);
+    html += tablaBarras("Personas por programa", sumarPor(filas, f => f.carrera).slice(0, 15));
+    html += tablaBarras("Personas por nivel o tipo", sumarPor(filas, f => f.tipo));
+    html += tablaBarras("Personas por sexo", sumarPor(filas, f => ({H: "Hombres", M: "Mujeres"}[f.sexo])));
+    $("r-contenido").innerHTML = total ? html : '<div class="tarjeta">No hay entradas en ese periodo.</div>';
+  } catch (e) { msg("r-estado", e.message, "mal"); }
+}
+
+// ------------------------------------------------------------------ entradas
+let entradasVistas = new Map();
+async function verEntradas() {
+  msg("e-estado", "Cargando…");
+  try {
+    const q = filtroEntradas("e", $("e-anul").value !== "si");
+    const m = $("e-mat").value.trim();
+    if (m) q.push("matricula=ilike." + encodeURIComponent(m + "*"));
+    q.push("select=id,sede_id,fecha_hora,matricula,personas,carrera,tipo,metodo,origen,motivo_manual,anulada,motivo_anulacion",
+           "order=fecha_hora.desc", "limit=" + (MAX_FILAS_TABLA + 1));
+    const filas = await api("GET", "entradas?" + q.join("&"));
+    const corto = filas.length > MAX_FILAS_TABLA;
+    if (corto) filas.pop();
+    entradasVistas = new Map(filas.map(f => [f.id, f]));
+    msg("e-estado", corto ? `Se muestran las ${MAX_FILAS_TABLA} más recientes. Acota las fechas o busca por matrícula.` : `${filas.length} registros.`);
+    const cab = `<tr><th>Fecha y hora</th><th>Biblioteca</th><th>Matrícula</th><th class="num">Personas</th>
+      <th>Programa</th><th>Origen</th><th>Estado</th><th></th></tr>`;
+    $("e-tabla").innerHTML = cab + filas.map(f => {
+      const origen = f.origen === "web" ? `<span class="chip aviso" title="${esc(f.motivo_manual)}">Agregada en web</span>` : "Checador";
+      const est = f.anulada ? `<span class="chip mal" title="${esc(f.motivo_anulacion)}">Anulada</span>` : "";
+      const acc = puedeEscribir() && !f.anulada ? `<button class="mini" data-anular="${f.id}">Anular</button>` : "";
+      return `<tr class="${f.anulada ? "anulada" : ""}"><td>${esc(f.fecha_hora.replace("T", " "))}</td>
+        <td>${esc(SEDES[f.sede_id] || f.sede_id)}</td><td>${esc(f.matricula)}</td><td class="num">${f.personas}</td>
+        <td>${esc(f.carrera || "")}</td><td>${origen}</td><td>${est}</td><td class="acciones">${acc}</td></tr>`;
+    }).join("");
+  } catch (e) { msg("e-estado", e.message, "mal"); }
+}
+
+let anulando = null;
+function abrirAnular(id) {
+  const f = entradasVistas.get(id); if (!f) return;
+  anulando = f;
+  $("dlg-anular-info").textContent = `${f.matricula} · ${f.fecha_hora.replace("T", " ")} · ${SEDES[f.sede_id] || f.sede_id}`;
+  $("an-motivo").value = ""; msg("an-msg", "");
+  $("dlg-anular").showModal();
+}
+async function bitacora(sede, accion, detalle) {
+  if (perfil.rol === "escolares") return;   // escolares no escribe en la bitácora (RLS)
+  await api("POST", "bitacora", {cuerpo: {sede_id: sede, fecha_hora: ahoraLocal().replace(" ", "T"),
+    accion, detalle}, extra: {Prefer: "return=minimal"}});
+}
+async function confirmarAnular() {
+  const motivo = $("an-motivo").value.trim();
+  if (motivo.length < 3) { msg("an-msg", "Escribe el motivo de la anulación.", "mal"); return; }
+  $("an-ok").disabled = true;
+  try {
+    const f = anulando;
+    // Igual que el checador: se anulan también las filas hermanas del mismo registro
+    const ruta = `entradas?sede_id=eq.${f.sede_id}&matricula=eq.${encodeURIComponent(f.matricula)}`
+      + `&fecha_hora=eq.${encodeURIComponent(f.fecha_hora)}&anulada=eq.0`;
+    const r = await api("PATCH", ruta, {cuerpo: {anulada: 1, motivo_anulacion: motivo,
+      fecha_anulacion: ahoraLocal(), modificado_en: new Date().toISOString()},
+      extra: {Prefer: "return=representation"}});
+    if (!r || !r.length) throw new Error("La entrada no cambió. Puede que ya estuviera anulada.");
+    await bitacora(f.sede_id, "Entrada anulada (web)",
+      `${f.matricula}, ${f.fecha_hora.replace("T", " ")}. Motivo: ${motivo}`);
+    $("dlg-anular").close();
+    verEntradas();
+  } catch (e) { msg("an-msg", e.message, "mal"); }
+  $("an-ok").disabled = false;
+}
+
+function abrirNueva() {
+  $("n-mat").value = ""; $("n-motivo").value = ""; msg("n-msg", "");
+  $("n-fecha").value = hoyISO(); $("n-hora").value = "";
+  $("dlg-nueva").showModal();
+}
+async function confirmarNueva() {
+  const mat0 = $("n-mat").value.trim().toUpperCase();
+  const fecha = $("n-fecha").value, hora = $("n-hora").value;
+  const motivo = $("n-motivo").value.trim(), sede = $("n-sede").value;
+  if (!mat0 || !fecha || !hora) { msg("n-msg", "Falta la matrícula, la fecha o la hora.", "mal"); return; }
+  if (motivo.length < 3) { msg("n-msg", "Escribe el motivo.", "mal"); return; }
+  const mat = mat0.replace(/[\s_]/g, "-");
+  const esVisitante = /^E\d{2}-/.test(mat);
+  if (!esVisitante && !/^\d{2}-\d{5}$/.test(mat)) {
+    msg("n-msg", "La matrícula debe verse como 26-12345 (o un folio de visitante como E26-PLY-00001).", "mal"); return;
+  }
+  $("n-ok").disabled = true;
+  try {
+    let personas = 1, identificado = 0, carrera = null, sexo = null, tipo = null;
+    if (esVisitante) {
+      const v = await api("GET", `visitantes?matricula=eq.${encodeURIComponent(mat)}&select=institucion,tipo,personas`);
+      if (!v.length) throw new Error("Ese folio de visitante no existe en la nube.");
+      personas = Math.max(1, v[0].personas); identificado = 1; carrera = v[0].institucion; tipo = v[0].tipo;
+    } else {
+      const p = await api("GET", `padron?matricula=eq.${encodeURIComponent(mat)}&select=programa,sexo,nivel`);
+      if (p.length) { identificado = 1; carrera = p[0].programa; sexo = p[0].sexo; tipo = p[0].nivel; }
+    }
+    const fh = `${fecha} ${hora}:00`;
+    await api("POST", "entradas", {cuerpo: {id: crypto.randomUUID(), sede_id: sede, fecha_hora: fh, fecha,
+      matricula: mat, personas, metodo: "manual", identificado, carrera, sexo, tipo,
+      origen: "web", motivo_manual: motivo, modificado_en: new Date().toISOString()},
+      extra: {Prefer: "return=minimal"}});
+    await bitacora(sede, "Entrada agregada (web)", `${mat}, ${fh}. Motivo: ${motivo}`);
+    $("dlg-nueva").close();
+    $("e-sede").value = sede; $("e-desde").value = fecha; $("e-hasta").value = fecha;
+    verEntradas();
+  } catch (e) { msg("n-msg", e.message, "mal"); }
+  $("n-ok").disabled = false;
+}
+
+// ------------------------------------------------------------------ padrón
+const RE_MAT = /^(\d{2})([NE]?)[-'‐-― ]?(\d{5})$/;
+const normMatricula = t => { const m = RE_MAT.exec(String(t || "").trim().toUpperCase()); return m ? `${m[1]}${m[2]}-${m[3]}` : null; };
+const limpio = (t, n) => String(t ?? "").split(/\s+/).filter(Boolean).join(" ").slice(0, n);
+const hoyTexto = hoyISO;
+let alumnosVistos = new Map();
+
+async function verPadron() {
+  msg("p-estado", "Cargando…");
+  try {
+    const t = $("p-buscar").value.trim().replace(/[*,()%]/g, " ").trim();
+    const q = ["select=matricula,nombres,apellidos,sexo,programa,campus,nivel,tipo_ingreso",
+               "eliminado=eq.0", "order=matricula.asc", "limit=101"];
+    if (t) { const p = encodeURIComponent(`*${t}*`);
+      q.push(`or=(matricula.ilike.${p},nombres.ilike.${p},apellidos.ilike.${p})`); }
+    const filas = await api("GET", "padron?" + q.join("&"));
+    const corto = filas.length > 100; if (corto) filas.pop();
+    alumnosVistos = new Map(filas.map(f => [f.matricula, f]));
+    msg("p-estado", corto ? "Se muestran los primeros 100. Escribe más letras para afinar." : `${filas.length} registros.`);
+    $("p-tabla").innerHTML = "<tr><th>Matrícula</th><th>Nombre</th><th>Apellidos</th><th>Sexo</th><th>Programa</th><th>Nivel</th><th>Campus</th><th></th></tr>"
+      + filas.map(f => `<tr><td>${esc(f.matricula)}</td><td>${esc(f.nombres)}</td><td>${esc(f.apellidos)}</td>
+        <td>${esc(f.sexo === "H" ? "Hombre" : f.sexo === "M" ? "Mujer" : "")}</td><td>${esc(f.programa)}</td>
+        <td>${esc(f.nivel)}</td><td>${esc(f.campus)}</td>
+        <td class="acciones">${puedeEditarPadron() ? `<button class="mini" data-editar="${esc(f.matricula)}">Editar</button>` : ""}</td></tr>`).join("");
+  } catch (e) { msg("p-estado", e.message, "mal"); }
+}
+
+let editando = null;  // matrícula en edición, o null si es un alta
+async function abrirAlumno(matricula) {
+  editando = matricula || null;
+  const f = matricula ? alumnosVistos.get(matricula) : {};
+  $("al-titulo").textContent = matricula ? "Editar alumno" : "Dar de alta un alumno";
+  $("al-mat").value = f.matricula || ""; $("al-mat").disabled = !!matricula;
+  $("al-nombres").value = f.nombres || ""; $("al-apellidos").value = f.apellidos || "";
+  $("al-sexo").value = f.sexo || ""; $("al-programa").value = f.programa || "";
+  $("al-campus").value = f.campus || ""; $("al-nivel").value = f.nivel || "";
+  $("al-ingreso").value = f.tipo_ingreso || "";
+  msg("al-msg", "");
+  $("dlg-alumno").showModal();
+  try {  // programas ya usados, para escribirlos siempre igual
+    const r = await api("GET", "padron?select=programa&programa=not.is.null&limit=1000&order=programa.asc");
+    $("lista-programas").innerHTML = [...new Set(r.map(x => x.programa))].map(p => `<option value="${esc(p)}">`).join("");
+  } catch (e) { /* la lista es solo una ayuda */ }
+}
+async function guardarAlumno() {
+  const mat = editando || normMatricula($("al-mat").value);
+  const nombres = limpio($("al-nombres").value, 80), apellidos = limpio($("al-apellidos").value, 80);
+  const sexo = $("al-sexo").value, programa = limpio($("al-programa").value, 120);
+  if (!mat) { msg("al-msg", "La matrícula debe verse como 26-12345, 26N-12345 o 26E-12345.", "mal"); return; }
+  if (!nombres || !apellidos) { msg("al-msg", "Escribe el nombre y los apellidos.", "mal"); return; }
+  if (!sexo) { msg("al-msg", "Elige el sexo.", "mal"); return; }
+  if (!programa) { msg("al-msg", "Escribe el programa educativo.", "mal"); return; }
+  const datos = {nombres, apellidos, sexo, programa,
+    campus: limpio($("al-campus").value, 60) || null, nivel: limpio($("al-nivel").value, 60) || null,
+    tipo_ingreso: limpio($("al-ingreso").value, 60) || null,
+    actualizado: hoyTexto(), eliminado: 0, modificado_en: new Date().toISOString()};
+  $("al-ok").disabled = true;
+  try {
+    if (editando) {
+      await api("PATCH", `padron?matricula=eq.${encodeURIComponent(mat)}`, {cuerpo: datos, extra: {Prefer: "return=minimal"}});
+      await bitacora(null, "Alumno editado (web)", mat);
+    } else {
+      const ya = await api("GET", `padron?matricula=eq.${encodeURIComponent(mat)}&select=matricula,eliminado`);
+      if (ya.length && !ya[0].eliminado) throw new Error("Esa matrícula ya está en el padrón.");
+      await api("POST", "padron?on_conflict=matricula", {cuerpo: {matricula: mat, ...datos},
+        extra: {Prefer: "resolution=merge-duplicates,return=minimal"}});
+      await bitacora(null, "Alumno agregado (web)", mat);
+    }
+    $("dlg-alumno").close();
+    $("p-buscar").value = mat; verPadron();
+  } catch (e) { msg("al-msg", e.message, "mal"); }
+  $("al-ok").disabled = false;
+}
+
+// Carga masiva: .xlsx o .csv con la misma lectura de columnas que el checador
+const ALIAS = {
+  matricula: ["matricula", "matr", "clave", "numerodecontrol"], nombres: ["nombre", "nombres"],
+  apellidos: ["apellidos", "apellido"], paterno: ["apellidopaterno", "paterno", "primerapellido"],
+  materno: ["apellidomaterno", "materno", "segundoapellido"], sexo: ["genero", "sexo"],
+  campus: ["campus"], nivel: ["nivel"], programa: ["programaeducativo", "programa", "carrera"],
+  tipo_ingreso: ["tipodeingreso", "tipoingreso", "ingreso"]};
+const claveCol = t => String(t ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+function leerCSV(buf) {
+  let txt; try { txt = new TextDecoder("utf-8", {fatal: true}).decode(buf); } catch (e) { txt = new TextDecoder("windows-1252").decode(buf); }
+  txt = txt.replace(/^﻿/, "");
+  const muestra = txt.split("\n").slice(0, 20).join("\n");
+  const delim = [",", ";", "\t"].reduce((a, b) => muestra.split(b).length > muestra.split(a).length ? b : a);
+  const filas = []; let fila = [], cel = "", entre = false;
+  for (let i = 0; i < txt.length; i++) {
+    const ch = txt[i];
+    if (entre) { if (ch === '"') { if (txt[i+1] === '"') { cel += '"'; i++; } else entre = false; } else cel += ch; }
+    else if (ch === '"') entre = true;
+    else if (ch === delim) { fila.push(cel); cel = ""; }
+    else if (ch === "\n" || ch === "\r") { if (ch === "\r" && txt[i+1] === "\n") i++; fila.push(cel); filas.push(fila); fila = []; cel = ""; }
+    else cel += ch;
+  }
+  if (cel || fila.length) { fila.push(cel); filas.push(fila); }
+  return filas;
+}
+function leerArchivo(buf, nombre) {
+  if (/\.csv$/i.test(nombre)) return leerCSV(buf);
+  const libro = XLSX.read(buf, {type: "array"});
+  return XLSX.utils.sheet_to_json(libro.Sheets[libro.SheetNames[0]], {header: 1, raw: false, defval: ""});
+}
+function modoSexo(valores) {
+  const v = new Set(valores.map(x => String(x || "").trim().toUpperCase()).filter(Boolean));
+  const f = v.has("F") || v.has("FEMENINO"), h = v.has("H") || v.has("HOMBRE");
+  return f && !h ? "M_ES_HOMBRE" : h && !f ? "M_ES_MUJER" : "AMBIGUO";
+}
+function normSexo(valor, modo) {
+  const v = String(valor || "").trim().toUpperCase();
+  if (["H", "HOMBRE", "MASCULINO"].includes(v)) return "H";
+  if (["F", "MUJER", "FEMENINO"].includes(v)) return "M";
+  if (v === "M") return modo === "M_ES_HOMBRE" ? "H" : modo === "M_ES_MUJER" ? "M" : null;
+  return null;
+}
+function analizarPadron(filas) {
+  let ini = -1, mapa = {};
+  for (let i = 0; i < Math.min(20, filas.length) && ini < 0; i++) {
+    const claves = filas[i].map(claveCol);
+    if (!claves.some(k => ALIAS.matricula.includes(k))) continue;
+    ini = i;
+    for (const [campo, al] of Object.entries(ALIAS)) { const j = claves.findIndex(k => al.includes(k)); if (j >= 0) mapa[campo] = j; }
+  }
+  if (ini < 0) throw new Error("No se encontró la columna «Matrícula» en las primeras filas del archivo.");
+  const cuerpo = filas.slice(ini + 1);
+  const cel = (f, campo) => mapa[campo] === undefined ? null : (limpio(f[mapa[campo]], 200) || null);
+  const modo = modoSexo(cuerpo.map(f => cel(f, "sexo")));
+  const registros = new Map(); const rechazadas = []; let repetidas = 0;
+  cuerpo.forEach((f, i) => {
+    if (!f.some(x => String(x).trim())) return;
+    const bruta = cel(f, "matricula");
+    const mat = normMatricula(bruta);
+    if (!mat) { rechazadas.push(`Fila ${ini + i + 2}: ${bruta ? "matrícula «" + bruta + "» con formato no válido" : "sin matrícula"}`); return; }
+    const apellidos = cel(f, "apellidos") || [cel(f, "paterno"), cel(f, "materno")].filter(Boolean).join(" ") || null;
+    if (registros.has(mat)) repetidas++;
+    registros.set(mat, {matricula: mat, nombres: cel(f, "nombres"), apellidos, sexo: normSexo(cel(f, "sexo"), modo),
+      programa: cel(f, "programa"), campus: cel(f, "campus"), nivel: cel(f, "nivel"), tipo_ingreso: cel(f, "tipo_ingreso")});
+  });
+  return {registros: [...registros.values()], rechazadas, repetidas};
+}
+let cargaPendiente = null;
+async function prepararCarga(archivo) {
+  $("ca-resumen").innerHTML = ""; msg("ca-msg", ""); $("ca-ok").disabled = true;
+  $("dlg-carga").showModal();
+  try {
+    cargaPendiente = analizarPadron(leerArchivo(await archivo.arrayBuffer(), archivo.name));
+    const c = cargaPendiente;
+    $("ca-resumen").innerHTML = `<p><b>${c.registros.length}</b> alumnos listos para cargar de «${esc(archivo.name)}».</p>
+      ${c.repetidas ? `<p class="suave">${c.repetidas} matrículas repetidas en el archivo (se usa la última).</p>` : ""}
+      ${c.rechazadas.length ? `<p class="msg mal">${c.rechazadas.length} filas no se cargarán:<br>${c.rechazadas.slice(0, 8).map(esc).join("<br>")}${c.rechazadas.length > 8 ? "<br>…" : ""}</p>` : ""}
+      <p class="suave">Los alumnos que ya existen se actualizan; los datos vacíos del archivo no borran lo que ya tienen.</p>`;
+    $("ca-ok").disabled = !c.registros.length;
+  } catch (e) { msg("ca-msg", e.message, "mal"); }
+}
+async function ejecutarCarga() {
+  const regs = cargaPendiente.registros; $("ca-ok").disabled = true;
+  const hoy = hoyTexto(), LOTE = 400, claves = ["nombres", "apellidos", "sexo", "programa", "campus", "nivel", "tipo_ingreso"];
+  let nuevos = 0;
+  try {
+    for (let i = 0; i < regs.length; i += LOTE) {
+      msg("ca-msg", `Cargando ${Math.min(i + LOTE, regs.length)} de ${regs.length}…`);
+      const lote = regs.slice(i, i + LOTE);
+      const lista = lote.map(r => encodeURIComponent(r.matricula)).join(",");
+      const previos = new Map((await api("GET", `padron?matricula=in.(${lista})&select=*`)).map(r => [r.matricula, r]));
+      const cuerpo = lote.map(r => {
+        const antes = previos.get(r.matricula) || {}; if (!previos.has(r.matricula)) nuevos++;
+        const o = {matricula: r.matricula, actualizado: hoy, eliminado: 0, modificado_en: new Date().toISOString()};
+        for (const k of claves) o[k] = r[k] ?? antes[k] ?? null;   // vacío en el archivo = conserva lo que había
+        return o;
+      });
+      await api("POST", "padron?on_conflict=matricula", {cuerpo, extra: {Prefer: "resolution=merge-duplicates,return=minimal"}});
+    }
+    await bitacora(null, "Padrón cargado (web)", `${regs.length} registros (${nuevos} nuevos), ${cargaPendiente.rechazadas.length} no cargadas.`);
+    msg("ca-msg", `Listo: ${regs.length} alumnos cargados (${nuevos} nuevos). Las bibliotecas lo reciben en su próxima sincronización.`, "bien");
+    $("ca-cancelar").textContent = "Cerrar";
+    $("p-buscar").value = ""; verPadron();
+  } catch (e) { msg("ca-msg", e.message + " Puedes volver a cargar el mismo archivo: no duplica.", "mal"); $("ca-ok").disabled = false; }
+}
+
+// ------------------------------------------------------------------ bibliotecas y bitácora
+async function estadoSedes() { return api("GET", "estado_sedes?select=sede_id,ultima_sync,pendientes"); }
+function antiguedad(iso) {
+  const min = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
+  if (min < 60) return `hace ${min} min`;
+  if (min < 1440) return `hace ${Math.round(min / 60)} h`;
+  return `hace ${Math.round(min / 1440)} días`;
+}
+async function verSedes() {
+  try {
+    const por = new Map((await estadoSedes()).map(r => [r.sede_id, r]));
+    const ver = perfil.rol === "encargado" ? [perfil.sede_id] : Object.keys(SEDES);
+    $("s-tabla").innerHTML = "<tr><th>Biblioteca</th><th>Última comunicación</th><th>Cuándo</th><th class='num'>Pendientes de subir</th><th>Estado</th></tr>"
+      + ver.map(k => {
+        const r = por.get(k);
+        if (!r) return `<tr><td>${esc(SEDES[k])}</td><td colspan="3" class="suave">Nunca se ha comunicado</td><td><span class="chip aviso">Sin datos</span></td></tr>`;
+        const horas = (Date.now() - new Date(r.ultima_sync)) / 3600000;
+        const chip = horas > 24 ? '<span class="chip mal">Más de un día</span>' : horas > 3 ? '<span class="chip aviso">Retrasada</span>' : '<span class="chip bien">Al día</span>';
+        return `<tr><td>${esc(SEDES[k])}</td><td>${esc(new Date(r.ultima_sync).toLocaleString("es-MX"))}</td>
+          <td>${antiguedad(r.ultima_sync)}</td><td class="num">${r.pendientes}</td><td>${chip}</td></tr>`;
+      }).join("");
+  } catch (e) { $("s-tabla").innerHTML = `<tr><td class="msg mal">${esc(e.message)}</td></tr>`; }
+}
+async function avisoSedes() {
+  if (perfil.rol === "encargado") return;
+  try {
+    const por = new Map((await estadoSedes()).map(r => [r.sede_id, r]));
+    const tarde = Object.keys(SEDES).filter(k => !por.has(k) || (Date.now() - new Date(por.get(k).ultima_sync)) > 86400000);
+    msg("aviso", tarde.length ? "Sin comunicación en más de un día: " + tarde.map(k => SEDES[k]).join(", ") + "." : "", "mal");
+  } catch (e) { /* el aviso es opcional */ }
+}
+async function verBitacora() {
+  try {
+    const q = ["select=sede_id,fecha_hora,accion,detalle", "order=fecha_hora.desc", "limit=300"];
+    if ($("b-sede").value) q.push("sede_id=eq." + $("b-sede").value);
+    const filas = await api("GET", "bitacora?" + q.join("&"));
+    $("b-tabla").innerHTML = "<tr><th>Fecha y hora</th><th>Biblioteca</th><th>Acción</th><th>Detalle</th></tr>"
+      + filas.map(f => `<tr><td>${esc(f.fecha_hora.replace("T", " "))}</td><td>${esc(SEDES[f.sede_id] || f.sede_id || "")}</td>
+        <td>${esc(f.accion)}</td><td style="white-space:normal">${esc(f.detalle)}</td></tr>`).join("");
+  } catch (e) { $("b-tabla").innerHTML = `<tr><td class="msg mal">${esc(e.message)}</td></tr>`; }
+}
+
+// ------------------------------------------------------------------ eventos
+$("form-login").addEventListener("submit", async ev => {
+  ev.preventDefault(); $("l-entrar").disabled = true; msg("login-msg", "");
+  try {
+    sesion = await tokenAuth({email: $("l-correo").value.trim(), password: $("l-clave").value}, "password");
+    guardarSesion(); $("l-clave").value = "";
+    await entrar();
+  } catch (e) { limpiarSesion(); msg("login-msg", e.message, "mal"); }
+  $("l-entrar").disabled = false;
+});
+$("salir").onclick = () => { limpiarSesion(); mostrar("login"); };
+$("pestanas").addEventListener("click", ev => { if (ev.target.dataset.p) cambiarPestana(ev.target.dataset.p); });
+$("r-ver").onclick = verResumen;
+$("e-ver").onclick = verEntradas;
+$("b-ver").onclick = verBitacora;
+$("e-nueva").onclick = abrirNueva;
+$("e-tabla").addEventListener("click", ev => { if (ev.target.dataset.anular) abrirAnular(ev.target.dataset.anular); });
+$("an-cancelar").onclick = () => $("dlg-anular").close();
+$("an-ok").onclick = confirmarAnular;
+$("n-cancelar").onclick = () => $("dlg-nueva").close();
+$("n-ok").onclick = confirmarNueva;
+$("p-ver").onclick = verPadron;
+$("p-buscar").addEventListener("keydown", ev => { if (ev.key === "Enter") verPadron(); });
+$("p-nuevo").onclick = () => abrirAlumno(null);
+$("p-tabla").addEventListener("click", ev => { if (ev.target.dataset.editar) abrirAlumno(ev.target.dataset.editar); });
+$("al-cancelar").onclick = () => $("dlg-alumno").close();
+$("al-ok").onclick = guardarAlumno;
+$("p-cargar").onclick = () => { $("p-archivo").value = ""; $("p-archivo").click(); };
+$("p-archivo").onchange = () => { if ($("p-archivo").files[0]) { $("ca-cancelar").textContent = "Cancelar"; prepararCarga($("p-archivo").files[0]); } };
+$("ca-cancelar").onclick = () => $("dlg-carga").close();
+$("ca-ok").onclick = ejecutarCarga;
+
+(async () => {
+  sesion = cargarSesion();
+  if (!sesion) { mostrar("login"); return; }
+  try { await entrar(); } catch (e) { limpiarSesion(); mostrar("login"); msg("login-msg", e.message, "mal"); }
+})();
+</script>
+</body>
+</html>
