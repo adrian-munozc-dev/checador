@@ -13,13 +13,18 @@ jobs:
     steps:
       - name: Consultar la base de datos
         run: |
-          # La llave "anon" es publica (ya esta en index.html). Las politicas RLS hacen que
-          # devuelva [], pero la consulta llega a la base y cuenta como actividad.
-          curl --fail --silent --show-error --max-time 30 \
+          # La llave "anon" es publica (ya esta en index.html). La tabla no da permisos a anon,
+          # asi que Postgres responde 401 con codigo 42501 (permiso denegado). Eso prueba que
+          # la consulta LLEGO a la base de datos y cuenta como actividad. Se acepta 200 o 42501.
+          codigo=$(curl --silent --show-error --max-time 30 -o respuesta.txt -w '%{http_code}' \
             -H "apikey: ${SUPABASE_ANON_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
-            "https://fbnuyrtcsvgqqdneipfo.supabase.co/rest/v1/sedes?select=id&limit=1"
-          echo
-          echo "Ping correcto: $(date -u)"
+            "https://fbnuyrtcsvgqqdneipfo.supabase.co/rest/v1/sedes?select=id&limit=1")
+          echo "HTTP $codigo"
+          if [ "$codigo" = "200" ] || grep -q '"code":"42501"' respuesta.txt; then
+            echo "Ping correcto: $(date -u)"
+          else
+            echo "Ping FALLIDO:"; cat respuesta.txt; exit 1
+          fi
         env:
           SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZibnV5cnRjc3ZncXFkbmVpcGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMTQyNzEsImV4cCI6MjEwODU5MDI3MX0.QhCsSppmu1G9K0ffpo_uVH-tvdAO-MJqwwvN3p5XG_M
