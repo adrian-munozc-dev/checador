@@ -1,0 +1,25 @@
+name: Ping Supabase
+
+# Evita que el proyecto gratuito de Supabase se pause por 7 dias sin actividad.
+# Corre lunes y jueves (dos veces por semana, para no quedar al borde de los 7 dias).
+on:
+  schedule:
+    - cron: "0 14 * * 1,4"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar la base de datos
+        run: |
+          # La llave "anon" es publica (ya esta en index.html). Las politicas RLS hacen que
+          # devuelva [], pero la consulta llega a la base y cuenta como actividad.
+          curl --fail --silent --show-error --max-time 30 \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "https://fbnuyrtcsvgqqdneipfo.supabase.co/rest/v1/sedes?select=id&limit=1"
+          echo
+          echo "Ping correcto: $(date -u)"
+        env:
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZibnV5cnRjc3ZncXFkbmVpcGZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwMTQyNzEsImV4cCI6MjEwODU5MDI3MX0.QhCsSppmu1G9K0ffpo_uVH-tvdAO-MJqwwvN3p5XG_M
